@@ -1,0 +1,7 @@
+torch
+librosa
+numpy
+matplotlib
+reportlab
+gradio
+scikit-learn

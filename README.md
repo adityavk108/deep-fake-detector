@@ -8,7 +8,7 @@ A comprehensive, web-based cybersecurity utility designed to analyze audio files
 
 - **Resilient audio preprocessing pipeline**: Standardizes a wide variety of audio with varying sampling rates and channels using smart chunking, and converts them into MFCC for inference.
 
-- **Deepfake Detection Engine**: Powered by a custom PyTorch CNN trained on datasets adapted from ASVspoof.
+- **Deepfake Inference Model**: Powered by a custom PyTorch CNN trained on datasets adapted from ASVspoof.
 
 - **Smart Chunking Strategy**: Seamlessly handles long-form audio by splitting inputs >4 seconds into overlapping windows and averaging the predictive probabilities.
 
@@ -26,29 +26,16 @@ A comprehensive, web-based cybersecurity utility designed to analyze audio files
 | Component | Technology |
 |-----------|------------|
 | ML Framework | PyTorch |
-| Audio Processing | Librosa |
+| UI Framework | Streamlit |
 | Visualization | Matplotlib |
 | PDF Generation | ReportLab |
-| UI Framework | Streamlit |
+| Audio Processing | Librosa |
 | Environment | venv |
 
 ## System Architecture
 The application is built on a streamlined, database-free architecture utilizing Streamlit for the frontend and PyTorch for the machine learning backend.
 
-### Model Architecture (PyTorch CNN)
-The core deep learning model treats audio feature extraction as an image classification problem. It processes 3-channel feature maps (MFCC, Delta, and Delta-Delta coefficients) using a 2D Convolutional Neural Network.
-
-<img width="2005" height="956" alt="pipeline" src="https://github.com/user-attachments/assets/ccf73c14-e8c5-4e2d-8b26-94d0f0c03c28" />
-
-Network dimensions:
-- Input Shape: (3, 40, 400) corresponding to (Channels, n_mfcc, max_len).
-- Conv2D(3, 32) → Batch Normalization → ReLU → Max Pooling
-- Conv2D(32, 64) → Batch Normalization → ReLU → Max Pooling
-- Conv2D(64, 128) → Batch Normalization → ReLU → Max Pooling
-- Conv2D(128, 256) → Batch Normalization → ReLU
-- Global Average Pooling 2D
-- Dense(256, 128) → ReLU → Dropout(0.4)
-- Dense(128, 1) → Sigmoid
+<img width="1757" height="471" alt="pipe" src="https://github.com/user-attachments/assets/2e58269c-7326-470d-a0d4-3e8b8f978d63" />
 
 ### Web Architecture (Streamlit)
 The application utilizes a decoupled client-server architecture, specifically separating the frontend interface from the heavy processing overhead of the detection engine to ensure the UI remains responsive. Designed as a vertical, single-page web application using Streamlit, the interface prioritizes a clean, clutter-free layout for immediate user feedback.
@@ -68,6 +55,20 @@ Key frontend components include:
 
 - **Metadata & Export:** Automatically extracts and displays intrinsic payload characteristics (file name, duration, sample rate, size) and provides a one-click PDF audit report download.
 
+### Model Architecture (PyTorch CNN)
+The core deep learning model treats audio feature extraction as an image classification problem. It processes 3-channel feature maps (MFCC, Delta, and Delta-Delta coefficients) using a 2D Convolutional Neural Network.
+
+<img width="2005" height="291" alt="model" src="https://github.com/user-attachments/assets/128c6328-aa73-443f-a9a8-f690d408b678" />
+
+Network dimensions:
+- Input Shape: (3, 40, 400) corresponding to (Channels, n_mfcc, max_len).
+- Conv2D(3, 32) → Batch Normalization → ReLU → Max Pooling
+- Conv2D(32, 64) → Batch Normalization → ReLU → Max Pooling
+- Conv2D(64, 128) → Batch Normalization → ReLU → Max Pooling
+- Conv2D(128, 256) → Batch Normalization → ReLU
+- Global Average Pooling 2D
+- Dense(256, 128) → ReLU → Dropout(0.4)
+- Dense(128, 1) → Sigmoid
 
 ## Flow
 The pipeline follows a strict sequence from file ingestion to forensic output, heavily gated by an upfront validation layer.

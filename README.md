@@ -1,17 +1,26 @@
 # Audio Deepfake Detection System
 
-A web-based audio deepfake detection system that analyzes audio files to determine if they are human-generated or AI-generated.
+A comprehensive, web-based cybersecurity utility designed to analyze audio files and ascertain whether they are human-generated or synthesized by AI (deepfakes). The system processes audio through an advanced machine learning pipeline, providing actionable insights, visualizations, and downloadable audit reports.
+
+<img width="1600" height="762" alt="image" src="https://github.com/user-attachments/assets/7a2ac199-9c28-4492-b25f-4540b6b3b78b" />
 
 ## Features
 
-- **Audio Upload**: Drag-and-drop audio files (FLAC, WAV, MP3, M4A, OGG)
-- **Deepfake Detection**: PyTorch CNN model detects AI-generated audio
-- **Visualizations**: Waveform and MFCC heatmap plots
-- **PDF Reports**: Downloadable audit reports for cybersecurity compliance
-- **Smart Pre-checks**: Validates audio before model inference (empty/silent, duration, corrupted, non-speech detection)
-- **Chunk + Average**: Handles audio longer than 4 seconds by splitting into overlapping chunks
-- **GPU Acceleration**: PyTorch with CUDA for fast inference
+- **Resilient audio preprocessing pipeline**: Standardizes a wide variety of audio with varying sampling rates and channels using smart chunking, and converts them into MFCC for inference.
 
+- **Deepfake Detection Engine**: Powered by a custom PyTorch CNN trained on datasets adapted from ASVspoof.
+
+- **Smart Chunking Strategy**: Seamlessly handles long-form audio by splitting inputs >4 seconds into overlapping windows and averaging the predictive probabilities.
+
+- **Pre-Inference Validation**: Intelligently skips model execution for empty/silent files, rejects corrupted files, and flags non-speech audio (e.g., ambient noise or music) to save GPU resources.
+
+- **Automated PDF reports**: Generates downloadable PDF audit reports detailing feature statistics, confidence scores, and system metadata for cybersecurity compliance.
+  
+- **Waveform Visualizations**: Automatically plots full waveform graphs and Mel-Frequency Cepstral Coefficient (MFCC) feature heatmaps.
+
+
+- **GPU Acceleration**: PyTorch with CUDA for fast inference
+  
 ## Tech Stack
 
 | Component | Technology |
@@ -22,6 +31,60 @@ A web-based audio deepfake detection system that analyzes audio files to determi
 | PDF Generation | ReportLab |
 | UI Framework | Streamlit |
 | Environment | venv |
+
+## System Architecture
+The application is built on a streamlined, database-free architecture utilizing Streamlit for the frontend and PyTorch for the machine learning backend.
+
+### Model Architecture (PyTorch CNN)
+The core deep learning model treats audio feature extraction as an image classification problem. It processes 3-channel feature maps (MFCC, Delta, and Delta-Delta coefficients) using a 2D Convolutional Neural Network.
+
+<img width="2005" height="956" alt="pipeline" src="https://github.com/user-attachments/assets/ccf73c14-e8c5-4e2d-8b26-94d0f0c03c28" />
+
+Network dimensions:
+- Input Shape: (3, 40, 400) corresponding to (Channels, n_mfcc, max_len).
+- Conv2D(3, 32) → Batch Normalization → ReLU → Max Pooling
+- Conv2D(32, 64) → Batch Normalization → ReLU → Max Pooling
+- Conv2D(64, 128) → Batch Normalization → ReLU → Max Pooling
+- Conv2D(128, 256) → Batch Normalization → ReLU
+- Global Average Pooling 2D
+- Dense(256, 128) → ReLU → Dropout(0.4)
+- Dense(128, 1) → Sigmoid
+
+### Web Architecture (Streamlit)
+The application utilizes a decoupled client-server architecture, specifically separating the frontend interface from the heavy processing overhead of the detection engine to ensure the UI remains responsive. Designed as a vertical, single-page web application using Streamlit, the interface prioritizes a clean, clutter-free layout for immediate user feedback.
+
+<img width="1161" height="248" alt="web" src="https://github.com/user-attachments/assets/677a1e7e-3350-4cf9-9d3b-dcdcbd7ca392" />
+
+Key frontend components include:
+
+- **Ingestion:** A drag-and-drop upload zone supporting standard audio formats including WAV, MP3, FLAC, M4A, and OGG.
+
+
+- **Results Dashboard:** Displays instant, color-coded binary predictions ("REAL" in green or "FAKE" in red), alongside a granular confidence percentage and probability score (0 to 1).
+
+
+- **Visual Forensics:** Dynamically renders a time-domain waveform plot (amplitude variations) and a 2D MFCC heatmap (frequency features across time) to visually explain the underlying acoustic structures driving the model's decision.
+
+
+- **Metadata & Export:** Automatically extracts and displays intrinsic payload characteristics (file name, duration, sample rate, size) and provides a one-click PDF audit report download.
+
+
+## Flow
+The pipeline follows a strict sequence from file ingestion to forensic output, heavily gated by an upfront validation layer.
+
+1. **Upload & Pre-Check Validation:** The user uploads an audio file via the Streamlit interface. Before any tensor operations occur, the file enters an inline validation engine that checks for corruption, sub-minimal duration (under 1 second), and absolute silence. It also utilizes spectral centroids to flag non-speech audio (like ambient noise or music), preventing skewed predictions.
+
+
+2. **Preprocessing & Feature Extraction:** Validated files are standardized to a clean 16,000 Hz mono signal using Librosa. The engine extracts 40 Mel-Frequency Cepstral Coefficients (MFCCs), plus their temporal derivatives (delta and delta-delta), forming a 3-channel feature map.
+
+
+3. **Chunk Processing:** To handle files exceeding the model's fixed 4-second input window, the pipeline splits long-form audio into smaller, overlapping temporal frames.
+
+
+4. **Inference:** The feature maps are passed to the PyTorch CNN. A hardware handler dynamically delegates tensor calculations to a CUDA-enabled GPU if available, falling back to the CPU if necessary.
+
+
+5. **Aggregation & Output:** For chunked files, the system averages the resulting probability scores to form a final classification. The ultimate prediction, confidence metrics, and generated visualizations are pushed to the Streamlit UI, while the ReportLab module compiles all technical metadata into a structured, downloadable PDF report.
 
 ## Quick Start
 
